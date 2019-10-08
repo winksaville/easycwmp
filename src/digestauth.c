@@ -189,7 +189,9 @@ static int lookup_sub_value(char *dest, size_t size, const char *data,
 				if (size > len)
 					size = len;
 				size--;
-				strncpy(dest, q1, size);
+				// Use memcpy so -Wstringop-overflow doesn't give a warning.
+				// Also, memcpy will generally be faster.
+				memcpy(dest, q1, size);
 				dest[size] = '\0';
 				return size;
 			}

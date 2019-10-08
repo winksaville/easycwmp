@@ -5,28 +5,29 @@
 # 	Author: ANIS ELLOUZE <anis.ellouze@pivasoftware.com>
 # Copyright (C) 2011-2012 Luka Perkov <freecwmp@lukaperkov.net>
 
-. /lib/functions.sh
-. /usr/share/libubox/jshn.sh
-. /usr/share/easycwmp/defaults
+. $EASYCWMP_INSTALL_DIR/lib/functions.sh
+. $EASYCWMP_INSTALL_DIR/usr/share/libubox/jshn.sh
+. $EASYCWMP_INSTALL_DIR/usr/share/easycwmp/defaults
 
-UCI_GET="/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} get"
-UCI_SET="/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} set"
-UCI_SHOW="/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} show"
-UCI_COMMIT="/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} commit"
-UCI_ADD="/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} add"
-UCI_DELETE="/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} delete"
-UCI_ADD_LIST="/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} add_list"
-UCI_DEL_LIST="/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} del_list"
-UCI_REVERT="/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} revert"
-UCI_CHANGES="/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes"
-UCI_BATCH="/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} batch"
+
+UCI_GET="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} get"
+UCI_SET="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} set"
+UCI_SHOW="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} show"
+UCI_COMMIT="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} commit"
+UCI_ADD="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} add"
+UCI_DELETE="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} delete"
+UCI_ADD_LIST="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} add_list"
+UCI_DEL_LIST="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} del_list"
+UCI_REVERT="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} revert"
+UCI_CHANGES="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes"
+UCI_BATCH="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} batch"
 
 DOWNLOAD_DIR="/tmp/easycwmp_download"
 EASYCWMP_PROMPT="easycwmp>"
 set_fault_tmp_file="/tmp/.easycwmp_set_fault_tmp"
 apply_service_tmp_file="/tmp/.easycwmp_apply_service"
 set_command_tmp_file="/tmp/.easycwmp_set_command_tmp"
-FUNCTION_PATH="/usr/share/easycwmp/functions"
+FUNCTION_PATH="$EASYCWMP_INSTALL_DIR/usr/share/easycwmp/functions"
 NOTIF_PARAM_VALUES="/tmp/.easycwmp_notif_param_value"
 easycwmp_config_changed=""
 uci_change_packages=""
@@ -375,8 +376,8 @@ handle_action() {
 				common_json_output_fault "" "$fault_code"
 			fi
 		elif [ "$__arg1" = "1 Firmware Upgrade Image" ]; then
-			local gr_backup=`grep "^/etc/easycwmp/\.backup\.xml" /etc/sysupgrade.conf`
-			[ -z $gr_backup ] && echo "/etc/easycwmp/.backup.xml" >> /etc/sysupgrade.conf
+			local gr_backup=`grep "^$EASYCWMP_INSTALL_DIR/etc/easycwmp/\.backup\.xml" /etc/sysupgrade.conf`
+			[ -z $gr_backup ] && echo "$EASYCWMP_INSTALL_DIR/etc/easycwmp/.backup.xml" >> /etc/sysupgrade.conf
 			dwfile=`ls $DOWNLOAD_DIR`
 			if [ "$dwfile" != "" ]; then
 				dwfile="$DOWNLOAD_DIR/$dwfile"

@@ -1,0 +1,17 @@
+config.status
+compile
+config.log
+configure
+depcomp
+install-sh
+missing
+INSTALL
+Makefile
+Makefile.in
+aclocal.m3
+aclocal.m4
+autom4te*
+*.o
+*.Po
+.dirstamp
+bin/

@@ -309,7 +309,8 @@ void config_exit(void)
 void config_load(void)
 {
 
-	uci_easycwmp = config_init_package("easycwmp");
+	//uci_easycwmp = config_init_package("easycwmp");
+	uci_easycwmp = config_init_package("/home/wink/opt/etc/config/easycwmp");
 
 	if (!uci_easycwmp) goto error;
 	if (config_init_local()) goto error;

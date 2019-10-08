@@ -133,6 +133,7 @@ void external_fetch_add_obj_resp (char **status, char **instance, char **fault)
 
 static int external_read_pipe(int (*json_handle)(char *))
 {
+	D("external_read_pipe:+\n");
 	char buffer[1];
 	ssize_t rxed;
 	char *c = NULL, *line = NULL;
@@ -140,7 +141,10 @@ static int external_read_pipe(int (*json_handle)(char *))
 	while ((rxed = read(pfds_out[0], buffer, sizeof(buffer))) > 0) {
 		if (buffer[0] == '\n') {
 			if (line == NULL) continue;
-			if (strcmp(line, EXTERNAL_PROMPT) == 0) goto done;
+			if (strcmp(line, EXTERNAL_PROMPT) == 0) {
+				D("external_read_pipe: done, saw %s\n", line);
+				goto done;
+			}
 			if (json_handle) json_handle(line);
 			FREE(line);
 		}
@@ -150,20 +154,26 @@ static int external_read_pipe(int (*json_handle)(char *))
 			else
 				t = asprintf(&c, "%c", buffer[0]);
 
-			if (t == -1) goto error;
+			if (t == -1) {
+				D("external_read_pipe: error %d\n", errno);
+				goto error;
+			}
 
 			free(line);
 			line = c;
 		}
 	}
+	D("external_read_pipe: rxed=%d done\n", rxed);
 
 done:
 	free(line);
+	D("external_read_pipe:-\n");
 	return 0;
 
 error:
 	free(c);
 	free(line);
+	D("external_read_pipe:- error\n");
 	return -1;
 }
 
@@ -185,11 +195,16 @@ static void external_add_json_obj(json_object *json_obj_out, char *object, char 
 
 int external_init()
 {
+	D("+\n");
 	log_message(NAME, L_NOTICE, "external script init\n");
-	if (pipe(pfds_out) < 0)
-			return -1;
-	if (pipe(pfds_in) < 0)
-			return -1;
+	if (pipe(pfds_out) < 0) {
+		D("- pipe pfds_out error\n");
+		return -1;
+	}
+	if (pipe(pfds_in) < 0) {
+		D("- pipe pfds_in error\n");
+		return -1;
+	}
 	if ((pid = fork()) == -1) {
 		log_message(NAME, L_CRIT, "external init fork failed\n");
 		return -1;
@@ -197,6 +212,7 @@ int external_init()
 
 	if (pid == 0) {
 		/* child */
+		D("child\n");
 		close(pfds_out[0]);
 		dup2(pfds_out[1], STDOUT_FILENO);
 		close(pfds_out[1]);
@@ -205,25 +221,65 @@ int external_init()
 		dup2(pfds_in[0], STDIN_FILENO);
 		close(pfds_in[0]);
 
-		int i=0;
+		// Count number of of elements in environ
+		size_t environ_len = 0;
+		while(environ[environ_len] != NULL) {
+			environ_len += 1;
+		}
+
+		// Add the additional space we need and env on the stack
+		const size_t additional_envs = 2;
+		environ_len += additional_envs;
+		char *env[environ_len + 1]; // One extra for the NULL
+
+		// Add the new env vars and copy current values
+		int i = 0;
+		asprintf((char **)&env[i++], "EASYCWMP_INSTALL_DIR=%s", easycwmp_install_dir);
+		asprintf((char **)&env[i++], "LD_LIBRARY_PATH=%s/lib", easycwmp_install_dir);
+		char *e = NULL;
+		int j = 0;
+		do {
+			e = env[i++] = environ[j++];
+		} while(e != NULL);
+
+		// Create argv array
+		i=0;
 		const char *argv[4];
-		argv[i++] = fc_script;
+		asprintf((char **)&argv[i++], "%s%s", easycwmp_install_dir, fc_script);
 		argv[i++] = "--json-input";
 		argv[i++] = NULL;
 
-		execvp(argv[0], (char **) argv);
+		char **s;
+		for (i = 0, s = (char **)&argv[0]; *s != NULL; s++, i++) D("argv[%d]=%s\n", i, *s);
+		for (i = 0, s = (char **)&env[0]; *s != NULL; s++, i++) D("env[%d]=%s\n", i, *s);
+
+		D("child START argv[0]=%s\n", argv[0]);
+		execvpe(argv[0], (char **)argv, (char **)env);
+		D("child START ERROR errno=%d:%s fc_script=%s\n", argv[0], errno, strerror(errno));
 		exit(ESRCH);
-	} else if (pid < 0)
+	} else if (pid < 0) {
+		D("- pic < 0 error\n");
+		log_message(NAME, L_CRIT, "external_init: pid < -1\n");
 		return -1;
+	}
 
-
-	close(pfds_out[1]);
-	close(pfds_in[0]);
+	D("parent, closing pfds_out[1] and pfds_in[0]\n");
+	int result;
+	result = close(pfds_out[1]);
+	if (result == -1) {
+		D("parent, error %d closing pfds_out[1]\n", errno);
+	}
+	result = close(pfds_in[0]);
+	if (result == -1) {
+		D("parent, error %d closing pfds_in[0]\n", errno);
+	}
 
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
 		log_message(NAME, L_CRIT, "ignoring pipe signal failed\n");
 
 	int r = external_read_pipe(NULL);
+
+	D("- parent r=%d read pipe result\n", r);
 	return r;
 }
 

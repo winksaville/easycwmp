@@ -1,5 +1,6 @@
 AC_INIT([easycwmpd], [1.8.4], [mohamed.kallel@pivasoftware.com])
 AM_INIT_AUTOMAKE
+AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_SRCDIR([src/easycwmp.c])
 
 AM_INIT_AUTOMAKE([subdir-objects])
