@@ -16,7 +16,7 @@
 
 #ifndef EASYCWMP_INSTALL_DIR
 //#define EASYCWMP_INSTALL_DIR "/"
-#define EASYCWMP_INSTALL_DIR "/homw/wink/opt/"
+#define EASYCWMP_INSTALL_DIR "/home/wink/opt/"
 #endif
 
 static char *easycwmp_install_dir = EASYCWMP_INSTALL_DIR;
