@@ -38,6 +38,32 @@ char *external_method_instance = NULL;
 char *external_method_fault = NULL;
 static int pfds_in[2], pfds_out[2], pid;
 
+#define STATICW
+
+#include <execinfo.h>
+
+void bt() {
+#define BUFF_SIZE 100
+	int j, nptrs;
+	void *buffer[BUFF_SIZE];
+	char **strings;
+
+	nptrs = backtrace(buffer, BUFF_SIZE);
+	//printf("bt:+ nptrs=%d *****\n", nptrs);
+
+	strings = backtrace_symbols(buffer, nptrs);
+	//backtrace_symbols_fd(buffer + 1, nptrs - 1, STDOUT_FILENO);
+	if (strings == NULL) {
+		perror("backtrace_symbols)");
+		exit(EXIT_FAILURE);
+	}
+	for (j = 1; j < nptrs; j++) {
+		printf(" ** %2d %s\n", nptrs - j - 1, strings[j]);
+	}
+	free(strings);
+	//printf("bt:- nptrs=%d *****\n", nptrs);
+}
+
 void external_add_list_paramameter(char *param_name, char *param_data, char *param_type, char *fault_code)
 {
 	struct external_parameter *external_parameter;
@@ -131,9 +157,9 @@ void external_fetch_add_obj_resp (char **status, char **instance, char **fault)
 	external_method_fault = NULL;
 }
 
-static int external_read_pipe(int (*json_handle)(char *))
+STATICW int external_read_pipe(int (*json_handle)(char *))
 {
-	D("external_read_pipe:+\n");
+	D("external_read_pipe:+ pfds_out[0]=%d\n", pfds_out[0]);
 	char buffer[1];
 	ssize_t rxed;
 	char *c = NULL, *line = NULL;
@@ -141,6 +167,7 @@ static int external_read_pipe(int (*json_handle)(char *))
 	while ((rxed = read(pfds_out[0], buffer, sizeof(buffer))) > 0) {
 		if (buffer[0] == '\n') {
 			if (line == NULL) continue;
+			D("external_read_pipe: read LF, json_handle=%p line='%s'\n", json_handle, line);
 			if (strcmp(line, EXTERNAL_PROMPT) == 0) {
 				D("external_read_pipe: done, saw %s\n", line);
 				goto done;
@@ -177,17 +204,18 @@ error:
 	return -1;
 }
 
-static void external_write_pipe(const char *msg)
+STATICW void external_write_pipe(const char *msg)
 {
 	char *value = NULL;
 	if(asprintf(&value, "%s\n", msg) == -1) return;
 	if (write(pfds_in[1], value, strlen(value)) == -1) {
-		log_message(NAME, L_CRIT, "error occured when trying to write to the pipe\n");
+		log_message(NAME, L_CRIT, "errno=%d:%s; occured when trying to write to pfds_in[1]=%d\n", errno, strerror(errno), pfds_in[1]);
+		bt();
 	}
 	free(value);
 }
 
-static void external_add_json_obj(json_object *json_obj_out, char *object, char *string)
+STATICW void external_add_json_obj(json_object *json_obj_out, char *object, char *string)
 {
 	json_object *json_obj_tmp = json_object_new_string(string);
 	json_object_object_add(json_obj_out, object, json_obj_tmp);
@@ -249,9 +277,9 @@ int external_init()
 		argv[i++] = "--json-input";
 		argv[i++] = NULL;
 
-		char **s;
-		for (i = 0, s = (char **)&argv[0]; *s != NULL; s++, i++) D("argv[%d]=%s\n", i, *s);
-		for (i = 0, s = (char **)&env[0]; *s != NULL; s++, i++) D("env[%d]=%s\n", i, *s);
+		//char **s;
+		//for (i = 0, s = (char **)&argv[0]; *s != NULL; s++, i++) D("argv[%d]=%s\n", i, *s);
+		//for (i = 0, s = (char **)&env[0]; *s != NULL; s++, i++) D("env[%d]=%s\n", i, *s);
 
 		D("child START argv[0]=%s\n", argv[0]);
 		execvpe(argv[0], (char **)argv, (char **)env);
@@ -263,7 +291,7 @@ int external_init()
 		return -1;
 	}
 
-	D("parent, closing pfds_out[1] and pfds_in[0]\n");
+	D("parent, closing pfds_out[1]=%d and pfds_in[0]=%d\n", pfds_out[1], pfds_in[0]);
 	int result;
 	result = close(pfds_out[1]);
 	if (result == -1) {
