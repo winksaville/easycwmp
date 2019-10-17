@@ -19,6 +19,8 @@
 #include "log.h"
 #include "easycwmp.h"
 #include "config.h"
+#include "sys/types.h"
+#include "unistd.h"
 
 static const int log_class[] = {
 	[L_CRIT] = LOG_CRIT,
@@ -47,7 +49,7 @@ void log_message(char *name, int priority, const char *format, ...)
 		time_t t = time(NULL);
 		struct tm tm = *localtime(&t);
 		va_start(vl, format);
-		printf("%d-%02d-%02d %02d:%02d:%02d [easycwmp] %s - ", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, log_str[priority]);
+		printf("%d:%d %d-%02d-%02d %02d:%02d:%02d [easycwmp] %s - ", getpid(), gettid(), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, log_str[priority]);
 		vprintf(format, vl);
 		va_end(vl);
 #endif

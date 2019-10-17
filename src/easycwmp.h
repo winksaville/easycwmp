@@ -13,6 +13,9 @@
 #ifndef _EASYCWMP_EASYCWMP_H__
 #define _EASYCWMP_EASYCWMP_H__
 
+#include "sys/types.h"
+#include "unistd.h"
+
 #define NAME	PACKAGE_NAME
 #define EASYCWMP_VERSION	PACKAGE_VERSION
 
@@ -24,13 +27,13 @@
 #define FREE(x) do { free(x); x = NULL; } while (0);
 
 #ifdef DEBUG
-#define D(format, ...) fprintf(stderr, "%s(%d): " format, __func__, __LINE__, ## __VA_ARGS__)
+#define D(format, ...) fprintf(stderr, "%d:%d %s(%d): " format, getpid(), gettid(), __func__, __LINE__, ## __VA_ARGS__)
 #else
 #define D(format, ...) no_debug(0, format, ## __VA_ARGS__)
 #endif
 
 #ifdef DEVEL
-#define DD(format, ...) fprintf(stderr, "%s(%d):: " format, __func__, __LINE__, ## __VA_ARGS__)
+#define DD(format, ...) fprintf(stderr, "%d:%d %s(%d):: " format, getpid(), gettid(), __func__, __LINE__, ## __VA_ARGS__)
 #define DDF(format, ...) fprintf(stderr, format, ## __VA_ARGS__)
 #else
 #define DD(format, ...) no_debug(0, format, ## __VA_ARGS__)
