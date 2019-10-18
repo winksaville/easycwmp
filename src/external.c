@@ -32,6 +32,8 @@
 #include "easycwmp.h"
 #include "log.h"
 
+#define OPT(x) x?x:""
+
 LIST_HEAD(external_list_parameter);
 char *external_method_status = NULL;
 char *external_method_instance = NULL;
@@ -159,7 +161,7 @@ void external_fetch_add_obj_resp (char **status, char **instance, char **fault)
 
 STATICW int external_read_pipe(int (*json_handle)(char *))
 {
-	D("external_read_pipe:+ pfds_out[0]=%d\n", pfds_out[0]);
+	D("+ pfds_out[0]=%d\n", pfds_out[0]);
 	char buffer[1];
 	ssize_t rxed;
 	char *c = NULL, *line = NULL;
@@ -167,12 +169,15 @@ STATICW int external_read_pipe(int (*json_handle)(char *))
 	while ((rxed = read(pfds_out[0], buffer, sizeof(buffer))) > 0) {
 		if (buffer[0] == '\n') {
 			if (line == NULL) continue;
-			D("external_read_pipe: read LF, json_handle=%p line='%s'\n", json_handle, line);
 			if (strcmp(line, EXTERNAL_PROMPT) == 0) {
-				D("external_read_pipe: done, saw %s\n", line);
+				D(" done, saw %s\n", line);
 				goto done;
 			}
-			if (json_handle) json_handle(line);
+			if (json_handle) {
+				D(" read LF json_handle=%p line='%s'\n", json_handle, line);
+        bt();
+				json_handle(line);
+			}
 			FREE(line);
 		}
 		else {
@@ -182,7 +187,7 @@ STATICW int external_read_pipe(int (*json_handle)(char *))
 				t = asprintf(&c, "%c", buffer[0]);
 
 			if (t == -1) {
-				D("external_read_pipe: error %d\n", errno);
+				D(" error %d\n", errno);
 				goto error;
 			}
 
@@ -190,22 +195,23 @@ STATICW int external_read_pipe(int (*json_handle)(char *))
 			line = c;
 		}
 	}
-	D("external_read_pipe: rxed=%d done\n", rxed);
+	D(" rxed=%d done\n", rxed);
 
 done:
 	free(line);
-	D("external_read_pipe:-\n");
+	D("- pfds_out[0]=%d OK\n", pfds_out[0]);
 	return 0;
 
 error:
 	free(c);
 	free(line);
-	D("external_read_pipe:- error\n");
+	D("- pfds_out[0]=%d error\n", pfds_out[0]);
 	return -1;
 }
 
 STATICW void external_write_pipe(const char *msg)
 {
+	D("+ pfds_in[1]=%d msg=%s\n", pfds_in[1], msg);
 	char *value = NULL;
 	if(asprintf(&value, "%s\n", msg) == -1) return;
 	if (write(pfds_in[1], value, strlen(value)) == -1) {
@@ -213,6 +219,7 @@ STATICW void external_write_pipe(const char *msg)
 		bt();
 	}
 	free(value);
+	D("- pfds_in[1]=%d msg=%s\n", pfds_in[1], msg);
 }
 
 STATICW void external_add_json_obj(json_object *json_obj_out, char *object, char *string)
@@ -240,7 +247,7 @@ int external_init()
 
 	if (pid == 0) {
 		/* child */
-		D("child\n");
+		D(" child\n");
 		close(pfds_out[0]);
 		dup2(pfds_out[1], STDOUT_FILENO);
 		close(pfds_out[1]);
@@ -330,8 +337,9 @@ void external_exit()
 
 int external_action_parameter_execute(char *command, char *class, char *name, char *arg)
 {
-	log_message(NAME, L_NOTICE, "external: execute %s %s %s %s\n",
-			command, class, name, arg?arg:"");
+	D("+ command=%s class=%s name=%s arg=%s\n", command, class?class:"", name?name:"", arg?arg:"");
+	//log_message(NAME, L_NOTICE, "external: execute %s %s %s %s\n",
+	//		command, class, name, arg?arg:"");
 
 	json_object *json_obj_out = json_object_new_object();
 	external_add_json_obj(json_obj_out, "command", command);
@@ -341,13 +349,15 @@ int external_action_parameter_execute(char *command, char *class, char *name, ch
 	external_write_pipe(json_object_to_json_string(json_obj_out));
 	json_object_put(json_obj_out);
 
+	D("- command=%s class=%s name=%s arg=%s\n", command, class?class:"", name?name:"", arg?arg:"");
 	return 0;
 }
 
 int external_action_simple_execute(char *command, char *class, char *arg)
 {
-	log_message(NAME, L_NOTICE, "external: execute %s %s %s\n",
-			command, class?class:"", arg?arg:"");
+	D("+ command=%s class=%s arg=%s\n", command, OPT(class), OPT(arg));
+	//log_message(NAME, L_NOTICE, "external: execute %s %s %s\n",
+	//		command, class?class:"", arg?arg:"");
 
 	json_object *json_obj_out = json_object_new_object();
 	external_add_json_obj(json_obj_out, "command", command);
@@ -356,12 +366,14 @@ int external_action_simple_execute(char *command, char *class, char *arg)
 	external_write_pipe(json_object_to_json_string(json_obj_out));
 	json_object_put(json_obj_out);
 
+	D("- command=%s class=%s arg=%s\n", command, OPT(class), OPT(arg));
 	return 0;
 }
 
 int external_action_download_execute(char *url, char *file_type, char *file_size, char *user_name, char *password)
 {
-	log_message(NAME, L_NOTICE, "external: execute download %s\n", url);
+	D("+ url==%s file_type==%s file_size=%s user_name=%s password=%s\n", OPT(url), OPT(file_type), OPT(file_size), OPT(user_name), OPT(password));
+	//log_message(NAME, L_NOTICE, "external: execute download %s\n", url);
 
 	json_object *json_obj_out = json_object_new_object();
 	external_add_json_obj(json_obj_out, "command", "download");
@@ -373,12 +385,14 @@ int external_action_download_execute(char *url, char *file_type, char *file_size
 	external_write_pipe(json_object_to_json_string(json_obj_out));
 	json_object_put(json_obj_out);
 
+	D("- url==%s file_type==%s file_size=%s user_name=%s password=%s\n", OPT(url), OPT(file_type), OPT(file_size), OPT(user_name), OPT(password));
 	return 0;
 }
 
 int external_action_upload_execute(char *url, char *file_type, char *user_name, char *password)
 {
-	log_message(NAME, L_NOTICE, "external: execute upload %s\n", url);
+	D("+ url==%s file_type==%s user_name=%s password=%s\n", OPT(url), OPT(file_type), OPT(user_name), OPT(password));
+	//log_message(NAME, L_NOTICE, "external: execute upload %s\n", url);
 
 	json_object *json_obj_out = json_object_new_object();
 	external_add_json_obj(json_obj_out, "command", "upload");
@@ -389,16 +403,20 @@ int external_action_upload_execute(char *url, char *file_type, char *user_name, 
 	external_write_pipe(json_object_to_json_string(json_obj_out));
 	json_object_put(json_obj_out);
 
+	D("- url==%s file_type==%s user_name=%s password=%s\n", OPT(url), OPT(file_type), OPT(user_name), OPT(password));
 	return 0;
 }
 
 int external_action_handle (int (*json_handle)(char *))
 {
+	D("+ json_handle=%p\n", json_handle);
+
 	json_object *json_obj_out = json_object_new_object();
 	external_add_json_obj(json_obj_out, "command", "end");
 	external_write_pipe(json_object_to_json_string(json_obj_out));
 	json_object_put(json_obj_out);
 
 	int r = external_read_pipe(json_handle);
+	D("- json_handle=%p\n", json_handle);
 	return r;
 }
