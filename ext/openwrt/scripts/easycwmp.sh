@@ -9,6 +9,9 @@
 . $EASYCWMP_INSTALL_DIR/usr/share/libubox/jshn.sh
 . $EASYCWMP_INSTALL_DIR/usr/share/easycwmp/defaults
 
+D() {
+	echo "$BASHPID:$BASHPID $BASH_SOURCE:$BASH_LINENO $1" >/dev/stderr
+}
 
 UCI_GET="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} get"
 UCI_SET="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} set"
@@ -227,7 +230,12 @@ done
 prefix_list="$DMROOT. $prefix_list"
 entry_execute_method_list="$entry_method_root $entry_execute_method_list"
 
+yo() {
+	D "yo action=$action"
+}
+
 handle_action() {
+	D "action=$action"
 	if [ "$action" = "get_value" ]; then
 		(common_entry_get_value "$__arg1")
 		local fault="$?"
@@ -538,4 +546,7 @@ handle_action() {
 		exit 0
 	fi
 }
-handle_action 2>/dev/null
+D "WINK******"
+yo
+#handle_action 2>/dev/null
+handle_action
