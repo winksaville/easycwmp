@@ -24,9 +24,13 @@ chmod +x $sdir/ext/openwrt/scripts/functions/*
 # symlink for libubox/jshn.sh
 ln -sf $ddir/share/libubox                                             $ddir/usr/share/libubox
 
+# symlink for sbin/uci
+ln -sf $ddir/bin/uci                                                   $ddir/sbin/uci
+
 # Make config file
 mkdir -p $ddir/etc/config
 ln -sf $sdir/ext/openwrt/config/easycwmp                               $ddir/etc/config/easycwmp
+
 
 # Get some openwrt shell scripts
 mkdir -p $ddir/lib/{config,functions}

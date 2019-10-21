@@ -11,3 +11,4 @@ rm -f  $ddir/lib/functions.sh
 rm -f  $ddir/lib/config/uci.sh
 rm -f  $ddir/lib/functions/network.sh
 rm -f  $ddir/usr/share/libubox
+rm -f  $ddir/sbin/uci
