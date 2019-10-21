@@ -161,7 +161,7 @@ void external_fetch_add_obj_resp (char **status, char **instance, char **fault)
 
 STATICW int external_read_pipe(int (*json_handle)(char *))
 {
-	D("+ pfds_out[0]=%d\n", pfds_out[0]);
+	//D("+ pfds_out[0]=%d\n", pfds_out[0]);
 	char buffer[1];
 	ssize_t rxed;
 	char *c = NULL, *line = NULL;
@@ -170,12 +170,12 @@ STATICW int external_read_pipe(int (*json_handle)(char *))
 		if (buffer[0] == '\n') {
 			if (line == NULL) continue;
 			if (strcmp(line, EXTERNAL_PROMPT) == 0) {
-				D(" done, saw %s\n", line);
+				//D(" done, saw %s\n", line);
 				goto done;
 			}
 			if (json_handle) {
 				D(" read LF json_handle=%p line='%s'\n", json_handle, line);
-        bt();
+        //bt();
 				json_handle(line);
 			}
 			FREE(line);
@@ -195,17 +195,17 @@ STATICW int external_read_pipe(int (*json_handle)(char *))
 			line = c;
 		}
 	}
-	D(" rxed=%d done\n", rxed);
+	//D(" rxed=%d done\n", rxed);
 
 done:
 	free(line);
-	D("- pfds_out[0]=%d OK\n", pfds_out[0]);
+	//D("- pfds_out[0]=%d OK\n", pfds_out[0]);
 	return 0;
 
 error:
 	free(c);
 	free(line);
-	D("- pfds_out[0]=%d error\n", pfds_out[0]);
+	//D("- pfds_out[0]=%d error\n", pfds_out[0]);
 	return -1;
 }
 

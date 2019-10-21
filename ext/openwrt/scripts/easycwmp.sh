@@ -235,7 +235,7 @@ yo() {
 }
 
 handle_action() {
-	D "action=$action"
+	#D "action=$action"
 	if [ "$action" = "get_value" ]; then
 		(common_entry_get_value "$__arg1")
 		local fault="$?"
