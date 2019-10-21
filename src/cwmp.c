@@ -267,6 +267,7 @@ static void cwmp_handle_end_session(void)
 
 int cwmp_inform(void)
 {
+	D(":+\n");
 	mxml_node_t *node;
 	int method_id;
 
@@ -282,6 +283,7 @@ int cwmp_inform(void)
 
 	if(rpc_inform()) {
 		log_message(NAME, L_NOTICE, "sending Inform failed\n");
+		D(": sending Inform failed\n");
 		goto error;
 	}
 	log_message(NAME, L_NOTICE, "receive InformResponse from the ACS\n");
@@ -290,6 +292,7 @@ int cwmp_inform(void)
 	cwmp_clear_notifications();
 
 	do {
+		D(": top of loop\n");
 		while((node = backup_check_transfer_complete()) && !cwmp->hold_requests) {
 			if(rpc_transfer_complete(node, &method_id)) {
 				log_message(NAME, L_NOTICE, "sending TransferComplete failed\n");
@@ -325,9 +328,11 @@ int cwmp_inform(void)
 	external_exit();
 	cwmp->retry_count = 0;
 	log_message(NAME, L_NOTICE, "end session success\n");
+	D(":-\n");
 	return 0;
 
 error:
+	D(": error\n");
 	http_client_exit();
 	xml_exit();
 	cwmp_handle_end_session();
@@ -335,6 +340,7 @@ error:
 	log_message(NAME, L_NOTICE, "end session failed\n");
 	cwmp_retry_session();
 
+	D(":-\n");
 	return -1;
 }
 
