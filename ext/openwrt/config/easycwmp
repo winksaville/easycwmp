@@ -15,9 +15,9 @@ config local
 	option logging_level '3'
 
 config acs
-	option url http://192.168.1.110:8080/openacs/acs
-	option username easycwmp
-	option password easycwmp
+	option url http://0.0.0.0:7547
+	option username 8KA8WA1151100043
+	option password ''
 	option parameter_key ''
 	option periodic_enable '1'
 	option periodic_interval '100'
