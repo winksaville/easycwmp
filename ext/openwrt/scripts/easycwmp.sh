@@ -5,13 +5,13 @@
 # 	Author: ANIS ELLOUZE <anis.ellouze@pivasoftware.com>
 # Copyright (C) 2011-2012 Luka Perkov <freecwmp@lukaperkov.net>
 
+# source bash debug library and set destination to STDERR
+. $EASYCWMP_INSTALL_DIR/lib/bdl-lib.sh
+bdl_dst=2
+
 . $EASYCWMP_INSTALL_DIR/lib/functions.sh
 . $EASYCWMP_INSTALL_DIR/usr/share/libubox/jshn.sh
 . $EASYCWMP_INSTALL_DIR/usr/share/easycwmp/defaults
-
-D() {
-	echo "$BASHPID:$BASHPID $BASH_SOURCE:$BASH_LINENO $1" >/dev/stderr
-}
 
 UCI_GET="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} get"
 UCI_SET="$EASYCWMP_INSTALL_DIR/sbin/uci -q ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} set"
@@ -144,6 +144,7 @@ json_get_opt() {
 			echo "$EASYCWMP_PROMPT"
 			;;
 		update_value_change)
+			bdl "update_value_change 1"
 			action="update_value_change"
 			;;
 		check_value_change)
@@ -205,6 +206,7 @@ case "$1" in
 		action="json_input"
 		;;
 	update_value_change)
+		bdl "update_value_change 2"
 		action="update_value_change"
 		;;
 	check_value_change)
@@ -230,12 +232,8 @@ done
 prefix_list="$DMROOT. $prefix_list"
 entry_execute_method_list="$entry_method_root $entry_execute_method_list"
 
-yo() {
-	D "yo action=$action"
-}
-
 handle_action() {
-	#D "action=$action"
+	bdl "action=$action"
 	if [ "$action" = "get_value" ]; then
 		(common_entry_get_value "$__arg1")
 		local fault="$?"
@@ -520,6 +518,7 @@ handle_action() {
 	fi
 
 	if [ "$action" = "update_value_change" ]; then
+		bdl "$action invoke (common_entry_update_value_change)"
 		(common_entry_update_value_change)
 		return
 	fi
@@ -540,13 +539,12 @@ handle_action() {
 		echo "$EASYCWMP_PROMPT"
 		while read CMD; do
 			[ -z "$CMD" ] && continue
+			bdl "json_input=$CMD"
 			json_get_opt "$CMD"
 			handle_action
 		done
 		exit 0
 	fi
 }
-D "WINK******"
-yo
 #handle_action 2>/dev/null
 handle_action

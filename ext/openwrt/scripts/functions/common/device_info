@@ -2,6 +2,10 @@
 # Copyright (C) 2015 PIVA Software <www.pivasoftware.com>
 # 	Author: MOHAMED Kallel <mohamed.kallel@pivasoftware.com>
 
+. $EASYCWMP_INSTALL_DIR/lib/bdl-lib.sh
+#bdl_dst=/home/wink/easycwmp.log
+bdl_dst=2
+
 #common_execute_method_param "$parameter" "$permission" "$get_cmd" "$set_cmd" "xsd:$type" "$forcedinform"
 #  $forcedinform should be set to 1 if the parameter is included in the inform message otherwise empty
 #  Default of $type = string
@@ -15,6 +19,7 @@ entry_execute_method_list="$entry_execute_method_list entry_execute_method_root_
 entry_execute_method_list_forcedinform="$entry_execute_method_list_forcedinform  entry_execute_method_root_DeviceInfo"
 
 entry_execute_method_root_DeviceInfo() {
+	bdl "entry_execute_method_root_DeviceInfo:+"
 	case "$1" in ""|"$DMROOT."|"$DMROOT.DeviceInfo."*)
 		common_execute_method_obj "$DMROOT.DeviceInfo." "0"
 		common_execute_method_param "$DMROOT.DeviceInfo.SpecVersion" "0" "echo 1.0" "" "" "1"
@@ -30,9 +35,11 @@ entry_execute_method_root_DeviceInfo() {
 		common_execute_method_obj "$DMROOT.DeviceInfo.MemoryStatus." "0"
 		common_execute_method_param "$DMROOT.DeviceInfo.MemoryStatus.Total" "0" "device_info_get_total_memory"
 		common_execute_method_param "$DMROOT.DeviceInfo.MemoryStatus.Free" "0" "device_info_get_free_memory"
+		bdl "entry_execute_method_root_DeviceInfo:-"
 		return 0;
 		;;
 	esac
+	bdl "entry_execute_method_root_DeviceInfo:- bad param"
 	return $E_INVALID_PARAMETER_NAME;
 }
 

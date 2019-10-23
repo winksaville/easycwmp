@@ -3,6 +3,10 @@
 # 	Author: MOHAMED Kallel <mohamed.kallel@pivasoftware.com>
 # 	Author: AHMED Zribi <ahmed.zribi@pivasoftware.com>
 
+. $EASYCWMP_INSTALL_DIR/lib/bdl-lib.sh
+#bdl_dst=/home/wink/easycwmp.log
+bdl_dst=2
+
 common_get_parameter_notification() {
 	local _dest="$1"
 	local _parm="$2"
@@ -359,14 +363,17 @@ common_entry_delete_object() {
 }
 
 common_entry_update_value_change() {
+	bdl "common_entry_update_value_change:+"
 	local entry method="common_update_value_change"
-  g_entry_param=""
+	g_entry_param=""
 	g_entry_arg=""
-  g_entry_method="$method"
+	g_entry_method="$method"
 	rm -f $NOTIF_PARAM_VALUES
 	for entry in $entry_execute_method_list; do
+		bdl "entry=$entry $g_entry_param"
 		$entry "$g_entry_param"
 	done
+	bdl "common_entry_update_value_change:-"
 	return 0
 }
 
