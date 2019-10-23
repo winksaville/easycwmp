@@ -12,3 +12,4 @@ rm -f  $ddir/lib/config/uci.sh
 rm -f  $ddir/lib/functions/network.sh
 rm -f  $ddir/usr/share/libubox
 rm -f  $ddir/sbin/uci
+rm -f  $ddir/lib/bdl-lib.sh

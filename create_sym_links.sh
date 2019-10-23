@@ -31,6 +31,9 @@ ln -sf $ddir/bin/uci                                                   $ddir/sbi
 mkdir -p $ddir/etc/config
 ln -sf $sdir/ext/openwrt/config/easycwmp                               $ddir/etc/config/easycwmp
 
+# symlink bdl-lib.sh
+mkdir -p $ddir/lib
+ln -sf $sdir/bdl-lib.sh                                                $ddir/lib/bdl-lib.sh
 
 # Get some openwrt shell scripts
 mkdir -p $ddir/lib/{config,functions}
@@ -38,7 +41,7 @@ wget http://pastebin.lukaperkov.net/openwrt/20121219_lib_functions.sh -O $ddir/l
 wget http://pastebin.lukaperkov.net/openwrt/20121219_lib_config_uci.sh -O $ddir/lib/config/uci.sh
 wget http://pastebin.lukaperkov.net/openwrt/20121219_lib_functions_network.sh -O $ddir/lib/functions/network.sh
 
-echo Export UCI_CONFIG_DIR and UBUS_SOCKET:
+# Export UCI_CONFIG_DIR and UBUS_SOCKET:
 #echo  export UCI_CONFIG_DIR="$sdir/ext/openwrt/config/"
 echo  export UCI_CONFIG_DIR="$ddir/etc/config/"
 echo  export UBUS_SOCKET="/var/run/ubus.sock"
