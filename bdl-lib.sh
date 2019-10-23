@@ -121,7 +121,7 @@ bdl () {
 		bdl_offset=
 	fi
 
-        info="$BASHPID:$BASHPID ${BASH_SOURCE[${bdl_call_depth}+1]}:${FUNCNAME[${bdl_call_depth}+1]}:${bdl_ln}:${@:+ }$@"
+	info="$BASHPID:$BASHPID ${BASH_SOURCE[${bdl_call_depth}+1]}:${FUNCNAME[${bdl_call_depth}+1]}:${bdl_ln}:${@:+ }$@"
 	if (( $# <= 1 )); then
 		bdl_nsl $bdl_dst $info
 	else
