@@ -138,12 +138,15 @@ int json_handle_get_parameter_name(char *line)
 
 int json_handle_deviceid(char *line)
 {
+	D("+ line=%s\n", line);
 	json_object *js_obj;
 	char *param_name, *param_permission, *fault_code, *c;
 
 	js_obj=json_tokener_parse(line);
-	if (js_obj == NULL || json_object_get_type(js_obj) != json_type_object)
+	if (js_obj == NULL || json_object_get_type(js_obj) != json_type_object) {
+			D("- err bad js_obj line=%s\n", line);
 			return -1;
+	}
 
 	cwmp_free_deviceid();
 
@@ -157,6 +160,7 @@ int json_handle_deviceid(char *line)
 	cwmp->deviceid.oui = c ? strdup(c) : c;
 
 	json_object_put(js_obj);
+	D("- line=%s\n", line);
 	return 0;
 }
 

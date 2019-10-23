@@ -244,6 +244,9 @@ static int netlink_init(void)
 
 int main (int argc, char **argv)
 {
+	D("+\n");
+	D("env UCI_CONFIG_DIR=%s\n", getenv("UCI_CONFIG_DIR"));
+	D("env EASYCWMP_INSTALL_DIR=%s\n", getenv("EASYCWMP_INSTALL_DIR"));
 	int c;
 	int start_event = 0;
 	bool foreground = false;
@@ -289,6 +292,7 @@ int main (int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
+	D("init stuff\n");
 	/* run early cwmp initialization */
 	cwmp = calloc(1, sizeof(struct cwmp_internal));
 	if (!cwmp) return -1;
@@ -304,13 +308,17 @@ int main (int argc, char **argv)
 		D("external scripts initialization failed\n");
 		return -1;
 	}
+	D("call config_load\n");
 	config_load();
 	log_message(NAME, L_NOTICE, "daemon started\n");
+	D("call config_init_deviceid\n");
 	cwmp_init_deviceid();
 
+	D("call external_exit\n");
 	external_exit();
 
 	if (start_event & START_BOOT) {
+		D("call external_exit\n");
 		cwmp_add_event(EVENT_BOOT, NULL, 0, EVENT_BACKUP);
 		cwmp_add_inform_timer();
 	}
@@ -350,6 +358,8 @@ int main (int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 	}
+
+	D("Initalization complete write pid\n");
 	char *buf = NULL;
 	if (asprintf(&buf, "%d", getpid()) != -1) {
 		int error = write(fd, buf, strlen(buf));
@@ -360,9 +370,11 @@ int main (int argc, char **argv)
 		free(buf);
 	}
 
+	D("main loop\n");
 	log_message(NAME, L_NOTICE, "entering main loop\n");
 	uloop_run();
 
+	D("main loop done, cleaning up\n");
 	ubus_exit();
 	uloop_done();
 
@@ -378,6 +390,7 @@ int main (int argc, char **argv)
 	free(cwmp);
 
 	log_message(NAME, L_NOTICE, "exiting\n");
+	D("-\n");
 	return 0;
 }
 

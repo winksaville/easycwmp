@@ -43,6 +43,7 @@ static void config_free_local(void) {
 
 static int config_init_local(void)
 {
+	D("+\n");
 	struct uci_section *s;
 	struct uci_element *e1;
 
@@ -128,6 +129,7 @@ static int config_init_local(void)
 				return -1;
 			}
 
+			D("-\n");
 			return 0;
 		}
 	}
@@ -147,6 +149,7 @@ static void config_free_acs(void) {
 
 static int config_init_acs(void)
 {
+	D("+\n");
 	struct uci_section *s;
 	struct uci_element *e;
 	struct tm tm;
@@ -241,6 +244,7 @@ static int config_init_acs(void)
 				return -1;
 			}
 
+			D("-\n");
 			return 0;
 		}
 	}
@@ -308,7 +312,7 @@ void config_exit(void)
 
 void config_load(void)
 {
-
+	D("+\n");
 	//uci_easycwmp = config_init_package("easycwmp");
 	uci_easycwmp = config_init_package("/home/wink/opt/etc/config/easycwmp");
 
@@ -323,11 +327,12 @@ void config_load(void)
 	config_free_ctx();
 
 	cwmp_update_value_change();
+	D("-\n");
 	return;
 
 error:
 	log_message(NAME, L_CRIT, "configuration (re)loading failed, exit daemon\n");
-	D("configuration (re)loading failed\n"); 
+	D("- configuration (re)loading failed\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -456,20 +461,24 @@ char *easycwmp_uci_set_value(char *package, char *section, char *option, char *v
 
 int easycwmp_uci_commit(void)
 {
+	D("+\n");
 	struct uci_element *e;
 	struct uci_context *ctx;
 	struct uci_ptr ptr;
 
 	ctx = uci_alloc_context();
 	if (!ctx) {
+		D("- err no ctx\n");
 		return -1;
 	}
 
 	uci_foreach_element(&easycwmp_uci_ctx->root, e) {
 		if (easycwmp_uci_init_ptr(ctx, &ptr, e->name, NULL, NULL, NULL)) {
+			D("- err easycwmp_uci_init_ptr\n");
 			return -1;
 		}
 		if (uci_lookup_ptr(ctx, &ptr, NULL, true) != UCI_OK) {
+			D("- err uci_lookup_ptr\n");
 			return -1;
 		}
 		uci_commit(ctx, &ptr.p, false);
@@ -477,6 +486,7 @@ int easycwmp_uci_commit(void)
 
 	uci_free_context(ctx);
 
+	D("-\n");
 	return 0;
 }
 #endif

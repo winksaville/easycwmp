@@ -734,30 +734,34 @@ void cwmp_free_deviceid(void)
 
 int cwmp_init_deviceid(void)
 {
+	D("+\n");
 	external_action_simple_execute("inform", "device_id", NULL);
-	if (external_action_handle(json_handle_deviceid))
+	if (external_action_handle(json_handle_deviceid)) {
+		D("- err couldn't perform external_action_handle(json_handle_deviceid)\n");
 		return -1;
+	}
 
 	if (!cwmp->deviceid.product_class || cwmp->deviceid.product_class[0] == '\0') {
-		D("in device you must define product_class\n");
+		D("- err in device you must define product_class\n");
 		return -1;
 	}
 
 	if (!cwmp->deviceid.serial_number || cwmp->deviceid.serial_number[0] == '\0') {
-		D("in device you must define serial_number\n");
+		D("- err in device you must define serial_number\n");
 		return -1;
 	}
 
 	if (!cwmp->deviceid.manufacturer || cwmp->deviceid.manufacturer[0] == '\0') {
-		D("in device you must define manufacturer\n");
+		D("- err in device you must define manufacturer\n");
 		return -1;
 	}
 
 	if (!cwmp->deviceid.oui || cwmp->deviceid.oui[0] == '\0') {
-		D("in device you must define manufacturer oui\n");
+		D("- err in device you must define manufacturer oui\n");
 		return -1;
 	}
 
+	D("-\n");
 	return 0;
 }
 
