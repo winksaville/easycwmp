@@ -269,8 +269,8 @@ int external_init()
 
 		// Add the new env vars and copy current values
 		int i = 0;
-		asprintf((char **)&env[i++], "EASYCWMP_INSTALL_DIR=%s", easycwmp_install_dir);
-		asprintf((char **)&env[i++], "LD_LIBRARY_PATH=%s/lib", easycwmp_install_dir);
+		asprintf((char **)&env[i++], "EASYCWMP_INSTALL_DIR=%s", ctx_easycwmp->install_dir);
+		asprintf((char **)&env[i++], "LD_LIBRARY_PATH=%s/lib", ctx_easycwmp->install_dir);
 		char *e = NULL;
 		int j = 0;
 		do {
@@ -280,7 +280,7 @@ int external_init()
 		// Create argv array
 		i=0;
 		const char *argv[4];
-		asprintf((char **)&argv[i++], "%s%s", easycwmp_install_dir, fc_script);
+		asprintf((char **)&argv[i++], "%s%s", ctx_easycwmp->install_dir, fc_script);
 		argv[i++] = "--json-input";
 		argv[i++] = NULL;
 

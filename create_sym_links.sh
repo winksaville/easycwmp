@@ -6,6 +6,7 @@ sdir=$(realpath "$sdir")
 ddir=$(realpath "$ddir")
 #echo sdir="$sdir"
 #echo ddir="$ddir"
+[ ! -d $ddir/var/run ] && mkdir -p $ddir/var/run
 [ ! -d $ddir/usr/share/easycwmp ] && mkdir -p $ddir/usr/share/easycwmp
 [ ! -d $ddir/usr/share/easycwmp/functions ] && mkdir -p $ddir/usr/share/easycwmp/functions
 ln -sf $sdir/ext/openwrt/scripts/easycwmp.sh                           $ddir/sbin/easycwmp
@@ -44,4 +45,4 @@ wget http://pastebin.lukaperkov.net/openwrt/20121219_lib_functions_network.sh -O
 # Export UCI_CONFIG_DIR and UBUS_SOCKET:
 #echo  export UCI_CONFIG_DIR="$sdir/ext/openwrt/config/"
 echo  export UCI_CONFIG_DIR="$ddir/etc/config/"
-echo  export UBUS_SOCKET="/var/run/ubus.sock"
+echo  export UBUS_SOCKET="$ddir/var/run/ubus.sock"

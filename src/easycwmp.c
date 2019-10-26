@@ -37,6 +37,13 @@
 #include "http.h"
 #include "xml.h"
 
+static struct easycwmp_ctx ctx = {
+	.install_dir = NULL,
+	.pid_file = NULL,
+	.ubus_socket_file = NULL,
+};
+struct easycwmp_ctx *ctx_easycwmp = &ctx;
+
 static void easycwmp_do_reload(struct uloop_timeout *timeout);
 static void easycwmp_do_notify(struct uloop_timeout *timeout);
 static void netlink_new_msg(struct uloop_fd *ufd, unsigned events);
@@ -45,12 +52,14 @@ static struct uloop_fd netlink_event = { .cb = netlink_new_msg };
 static struct uloop_timeout reload_timer = { .cb = easycwmp_do_reload };
 static struct uloop_timeout notify_timer = { .cb = easycwmp_do_notify };
 
-struct option long_opts[] = {
+static struct option long_opts[] = {
 	{"foreground", no_argument, NULL, 'f'},
 	{"help", no_argument, NULL, 'h'},
 	{"version", no_argument, NULL, 'v'},
 	{"boot", no_argument, NULL, 'b'},
 	{"getrpcmethod", no_argument, NULL, 'g'},
+	{"installdir", required_argument, NULL, 'i'},
+	{"ubussockfile", required_argument, NULL, 's'},
 	{NULL, 0, NULL, 0}
 };
 
@@ -61,6 +70,8 @@ static void print_help(void)
 	printf(" -b, --boot              Run with \"1 BOOT\" event\n");
 	printf(" -g, --getrpcmethod      Run with \"2 PERIODIC\" event and with ACS GetRPCMethods\n");
 	printf(" -h, --help              Display this help text\n");
+	printf(" -i, --installdir        installation directory or export EASYCWMP_INSTALL_DIR\n");
+	printf(" -s, --ubussockfile      full path to ubus socket file\n");
 	printf(" -v, --version           Display the %s version\n", NAME);
 }
 
@@ -251,10 +262,15 @@ int main (int argc, char **argv)
 	int start_event = 0;
 	bool foreground = false;
 
+	D("Get command line options\n");
 	while (1) {
-		c = getopt_long(argc, argv, "fhbgv", long_opts, NULL);
-		if (c == EOF)
+		D("Get command line options TOP\n");
+		c = getopt_long(argc, argv, "fhbgvi:s:", long_opts, NULL);
+		D("%d:%c optind=%d opterr=%d optopt=%d optarg=%s\n", c, c, optind, opterr, optopt, optarg);
+		if (c == EOF) {
+			D("EOF\n");
 			break;
+		}
 		switch (c) {
 			case 'b':
 				start_event |= START_BOOT;
@@ -271,14 +287,49 @@ int main (int argc, char **argv)
 			case 'v':
 				print_version();
 				exit(EXIT_SUCCESS);
+			case 'i':
+				D("i optind=%d optarg=%s", optind, optarg);
+				ctx_easycwmp->install_dir = strdup(optarg);
+				break;
+			case 's':
+				D("s optind=%d optarg=%s", optind, optarg);
+				ctx_easycwmp->ubus_socket_file = strdup(optarg);
+				break;
 			default:
 				print_help();
 				exit(EXIT_FAILURE);
 		}
 	}
-	int fd = open("/var/run/easycwmp.pid", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-	if(fd == -1)
+
+	if (NULL == ctx_easycwmp->install_dir) {
+		ctx_easycwmp->install_dir = getenv("EASYCWMP_INSTALL_DIR");
+	}
+	if ((NULL == ctx_easycwmp->install_dir) || (0 == strlen(ctx_easycwmp->install_dir))) {
+		ctx_easycwmp->install_dir = strdup(EASYCWMP_INSTALL_DIR_DEFAULT);
+		D("No -i option or EASYCWMP_INSTALL_DIR environment variable, assuming '%s'\n", ctx_easycwmp->install_dir);
+	}
+	if (ctx_easycwmp->install_dir[strlen(ctx_easycwmp->install_dir)-1] != '/') {
+		// Be sure Append '/'
+		char *tmp;
+		if (asprintf(&tmp, "%s/", ctx_easycwmp->install_dir) < 0) {
+			log_message(NAME, L_CRIT, "Err: Could not append '/' to ctx_easycwmp->install_dir string errno=%d:%s\n", errno, strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+		ctx_easycwmp->install_dir = tmp;
+	}
+	D("ctx_easycwmp->install_dir=%s\n", ctx_easycwmp->install_dir);
+
+	if (asprintf(&ctx_easycwmp->pid_file, "%s%s", ctx_easycwmp->install_dir, "var/run/easycwmp.pid") < 0) {
+		log_message(NAME, L_CRIT, "Err: Could not create pid_file errno=%d:%s\n", errno, strerror(errno));
 		exit(EXIT_FAILURE);
+	}
+
+	D("ctx_easycwmp->pid_file=%s\n", ctx_easycwmp->pid_file);
+	int fd = open(ctx_easycwmp->pid_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	if(fd == -1) {
+		D("Err: Could not open pid_file '%s' errno=%d:%s\n", ctx_easycwmp->pid_file, errno, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 	if (flock(fd, LOCK_EX | LOCK_NB) == -1)
 		exit(EXIT_SUCCESS);
 	if(fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC) < 0 )
@@ -286,11 +337,6 @@ int main (int argc, char **argv)
 
 	setlocale(LC_CTYPE, "");
 	umask(0037);
-
-	if (getuid() != 0) {
-		D("run %s as root\n", NAME);
-		exit(EXIT_FAILURE);
-	}
 
 	D("init stuff\n");
 	/* run early cwmp initialization */
@@ -310,7 +356,6 @@ int main (int argc, char **argv)
 	}
 	D("call config_load\n");
 	config_load();
-	log_message(NAME, L_NOTICE, "daemon started\n");
 	D("call config_init_deviceid\n");
 	cwmp_init_deviceid();
 
@@ -358,19 +403,20 @@ int main (int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 	}
+	log_message(NAME, L_NOTICE, "daemon started\n");
 
 	D("Initalization complete write pid\n");
 	char *buf = NULL;
-	if (asprintf(&buf, "%d", getpid()) != -1) {
-		int error = write(fd, buf, strlen(buf));
-		if ( error < 0) {
-			D("Unable to write the easycwmpd pid to /var/run/easycwmpd.pid\n");
-		}
-
-		free(buf);
+	if (asprintf(&buf, "%d", getpid()) < 0) {
+		log_message(NAME, L_CRIT, "Err: Unable to convert pid to string, errno=%d:%s\n", errno, strerror(errno));
+		exit(EXIT_FAILURE);
 	}
+	if (write(fd, buf, strlen(buf) < 0)) {
+		log_message(NAME, L_CRIT, "Err: Unable to write pid to '%s', errno=%d:%s\n", ctx_easycwmp->pid_file, errno, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	free(buf);
 
-	D("main loop\n");
 	log_message(NAME, L_NOTICE, "entering main loop\n");
 	uloop_run();
 
@@ -388,6 +434,9 @@ int main (int argc, char **argv)
 	if (cwmp->netlink_sock[0] != -1) close(cwmp->netlink_sock[0]);
 	if (cwmp->netlink_sock[1] != -1) close(cwmp->netlink_sock[1]);
 	free(cwmp);
+	FREE(ctx_easycwmp->install_dir);
+	FREE(ctx_easycwmp->pid_file);
+	FREE(ctx_easycwmp->ubus_socket_file);
 
 	log_message(NAME, L_NOTICE, "exiting\n");
 	D("-\n");

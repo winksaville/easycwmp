@@ -124,6 +124,13 @@ static int config_init_local(void)
 				return -1;
 			}
 
+			if (ctx_easycwmp->ubus_socket_file != NULL) {
+				/* Use command line option if its defined */
+				D("Override option ubus_socket='%s' with '%s'\n",
+					config->local->ubus_socket, ctx_easycwmp->ubus_socket_file);
+				FREE(config->local->ubus_socket);
+				config->local->ubus_socket = strdup(ctx_easycwmp->ubus_socket_file);
+			}
 			if (!config->local->ubus_socket) {
 				D("in local you must define ubus_socket\n");
 				return -1;

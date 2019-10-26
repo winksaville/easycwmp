@@ -24,7 +24,7 @@
 #define ARRAY_AND_SIZE(x) (x), ARRAY_SIZE(x)
 #endif
 
-#define FREE(x) do { free(x); x = NULL; } while (0);
+#define FREE(x) do { if (!(x)) { free(x); x = NULL; } } while (0);
 
 #ifdef DEBUG
 #define D(format, ...) fprintf(stderr, "%d:%d %s(%d): " format, getpid(), gettid(), __func__, __LINE__, ## __VA_ARGS__)
@@ -39,6 +39,20 @@
 #define DD(format, ...) no_debug(0, format, ## __VA_ARGS__)
 #define DDF(format, ...) no_debug(0, format, ## __VA_ARGS__)
 #endif
+
+#define UNUSED(x) (void)(x)
+
+/**
+ * EasyCwmp Global context information initalized at startup
+ * TODO: Pass as parameter to relevant routines.
+ */
+#define EASYCWMP_INSTALL_DIR_DEFAULT "/"
+struct easycwmp_ctx {
+	char *install_dir;
+	char *pid_file;
+	char *ubus_socket_file;
+};
+extern struct easycwmp_ctx *ctx_easycwmp;
 
 static inline void no_debug(int level, const char *fmt, ...)
 {

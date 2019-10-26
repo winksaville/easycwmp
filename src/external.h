@@ -13,13 +13,8 @@
 #ifndef _EASYCWMP_EXTERNAL_H__
 #define _EASYCWMP_EXTERNAL_H__
 #include <libubox/list.h>
+#include "easycwmp.h"
 
-#ifndef EASYCWMP_INSTALL_DIR
-//#define EASYCWMP_INSTALL_DIR "/"
-#define EASYCWMP_INSTALL_DIR "/home/wink/opt/"
-#endif
-
-static char *easycwmp_install_dir = EASYCWMP_INSTALL_DIR;
 static char *fc_script = "sbin/easycwmp";
 extern struct list_head external_list_parameter;
 
