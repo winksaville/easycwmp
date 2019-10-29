@@ -24,7 +24,7 @@
 #define ARRAY_AND_SIZE(x) (x), ARRAY_SIZE(x)
 #endif
 
-#define FREE(x) do { if (!(x)) { free(x); x = NULL; } } while (0);
+#define FREE(x) do { if (x != NULL) { free(x); x = NULL; } } while (0);
 
 #ifdef DEBUG
 #define D(format, ...) fprintf(stderr, "%d:%d %s(%d): " format, getpid(), gettid(), __func__, __LINE__, ## __VA_ARGS__)
